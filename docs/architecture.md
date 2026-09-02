@@ -1,64 +1,94 @@
 # CareerPilot AI Architecture
 
-This document describes the intended boundaries in beginner-friendly terms. Phase 1 creates
-the boundaries but does not pretend that later AI behavior already exists.
+CareerPilot uses clear boundaries so each part can evolve without turning the API into one
+large prompt or service.
 
 ```mermaid
 flowchart LR
-    UI[Streamlit UI] -->|HTTP| API[FastAPI]
+    UI[Streamlit] -->|HTTP| API[FastAPI]
     API --> Services[Application services]
-    Services --> DB[(SQLite now / PostgreSQL later)]
-    Services --> Graph[LangGraph - Phase 4]
-    Graph --> Providers[Job provider interfaces]
-    Graph --> RAG[Profile RAG - Phase 2]
+    Services --> DB[(SQLite / PostgreSQL-ready)]
+    Services --> Graph[LangGraph]
+    Graph --> Provider[JobProvider]
+    Graph --> RAG[FAISS profile retrieval]
+    Graph --> LLM[Optional structured LLM]
 ```
 
-## Why FastAPI and Streamlit are separate
+## Agent workflow
 
-Streamlit owns presentation: forms, progress indicators, tables, and reports. FastAPI owns
-validated HTTP contracts and application behavior. This lets another frontend or automated
-client use the same backend later.
+```mermaid
+flowchart TD
+    Start --> Planner
+    Planner --> Research[Job Research]
+    Research -->|jobs found| Profile[Profile / RAG]
+    Research -->|no jobs| Failure
+    Profile --> Ranking[Deterministic Ranking]
+    Ranking --> Gaps[Skill Gaps]
+    Gaps --> Writer[Application Writer]
+    Writer --> Critic
+    Critic -->|valid| Complete
+    Critic -->|invalid and retries remain| Writer
+    Critic -->|retry limit reached| Failure
+```
 
-## Why agents do not live in API routes
+`CareerPilotState` is a typed dictionary. Each node reads named fields and returns explicit
+updates. The graph has completion and failure terminal nodes, and the critic route uses
+`MAX_AGENT_RETRIES` to prevent infinite loops.
 
-Routes should validate a request, call an application service, and shape a response. Agent
-workflows can be slow, retry, or fail partway through. Keeping agents under `app/agents/`
-prevents route modules from becoming large prompts mixed with HTTP and database code.
+## API and UI separation
 
-## Why job providers use an interface
+Streamlit owns presentation, local page state, and friendly error messages. FastAPI owns
+validated contracts and application behavior. This allows another frontend to reuse the API
+and prevents UI code from touching database sessions or agents directly.
 
-`JobProvider` defines the stable `search_jobs` contract. `MockJobProvider` fulfills it using
-local JSON, so development and tests need no internet or paid API. A real provider can later
-implement the same contract without changing the planner or ranking engine.
+## Services and agents
 
-## Why ranking will be deterministic
+Routes create small services. Services coordinate persistence and domain operations. Agents
+live under `app/agents/` and each has one responsibility: planning, research, profile
+retrieval, ranking, skill gaps, writing, or verification. Agent prompts and HTTP handling are
+never mixed together.
 
-An LLM should not invent an unexplained score. Phase 3 will calculate every score from fixed
-weights and normalized profile/job evidence. An LLM may explain those numbers, but the
-explanation must agree with the calculation.
+## Resume ingestion and RAG
 
-## Why SQLAlchemy is used
+PDF, TXT, and Markdown files are size checked and parsed in memory. Path components are
+removed from filenames and uploads are never executed. A line-based parser extracts verified
+education, skills, projects, experience, certifications, tools, and programming languages.
 
-SQLAlchemy provides typed Python models and isolates most database-specific connection code.
-Development uses SQLite because it requires no server. Changing `DATABASE_URL`, adding a
-PostgreSQL driver, and introducing migrations later will enable PostgreSQL without rewriting
-business logic. JSON columns are sufficient for small skill lists now.
+`ProfileVectorStore` makes retrieval implementation-independent. `FaissProfileStore` is the
+current adapter. It uses deterministic hashing embeddings, cosine similarity through
+`IndexFlatIP`, and one persisted local index per profile. A hosted embedding implementation
+can replace it without changing the profile agent.
 
-## How LangGraph will be added
+## Job providers and ranking
 
-Phase 4 will define a typed graph state and explicit nodes for planning, research, profile
-retrieval, and ranking. Conditional edges will handle validation, retries, and failure states.
-No graph dependency is installed in Phase 1 because there is no graph behavior to run yet.
+`JobProvider` prevents agents from depending on a specific jobs API. The demo provider reads
+ten fictional listings and applies ordinary Python filters. The job service removes
+duplicates by `(source, external_id)` before persistence.
 
-## How RAG will be added
+Ranking is never chosen by an LLM. Fixed weights are skills 40%, experience 20%, education
+15%, location 15%, beginner friendliness 5%, and project relevance 5%. The critic
+recalculates the scores and compares missing required skills before accepting a draft.
 
-Phase 2 will safely extract text from PDF, TXT, and Markdown resumes, structure verified
-profile facts, chunk useful passages, and access a vector store through a small interface.
-ChromaDB or FAISS and PDF dependencies are deferred until that implementation exists.
+## LLM abstraction
 
-## Failure and security baseline
+The offline planner and writer are complete deterministic fallbacks. When an API key and
+model are configured, `OpenAIResponsesLLM` requests Pydantic structured output through the
+Responses API with `store=False`, a configured timeout, exponential backoff for transient
+connection/rate-limit failures, and bounded attempts. An LLM failure falls back locally.
 
-API validation errors and unexpected errors share a stable JSON envelope. Unexpected errors
-are logged with method, path, and exception type, but not request bodies, API keys, or resume
-text. Generated databases and environment files are ignored by Git. Application submission
-will remain a manual user action.
+## Persistence
+
+SQLAlchemy 2.x models store profiles, jobs, rankings, drafts, runs, errors, and evaluations.
+SQLite requires no server for a portfolio demo. PostgreSQL later needs a driver, a new
+`DATABASE_URL`, and Alembic migrations; application services remain unchanged.
+
+## Reliability and security
+
+- Request schemas validate limits and types.
+- Upload size/type checks happen before parsing.
+- API clients and LLM calls have timeouts.
+- Unexpected errors use a safe JSON envelope and protected server logs.
+- API keys, resume bodies, and personal data are not written to logs.
+- The graph has explicit failure routes and bounded correction.
+- Evaluation runs offline and verifies ranking consistency and unsupported claims.
+- Applications are drafts only and are never submitted automatically.

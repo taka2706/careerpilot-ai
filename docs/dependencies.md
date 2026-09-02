@@ -1,23 +1,30 @@
-# Dependency plan
+# Dependency Decisions
 
-## Phase 1 runtime
+## Runtime
 
-- **FastAPI + Uvicorn** — typed HTTP API and development server.
-- **Pydantic + Pydantic Settings** — request validation and environment configuration.
-- **SQLAlchemy** — database abstraction compatible with SQLite now and PostgreSQL later.
-- **Streamlit** — lightweight portfolio dashboard.
-- **HTTPX** — timeout-aware communication from the dashboard to the API.
-- **python-multipart** — prepares FastAPI's form parsing dependency for Phase 2 routes.
-- **pytest + pytest-asyncio** — synchronous and asynchronous tests without network access.
-- **Ruff + mypy** — linting and strict static type checking.
+- **FastAPI + Uvicorn** — typed HTTP API and server.
+- **Pydantic + Pydantic Settings** — structured contracts and environment configuration.
+- **SQLAlchemy** — persistence abstraction for SQLite now and PostgreSQL later.
+- **Streamlit + HTTPX** — portfolio dashboard and timeout-aware backend calls.
+- **python-multipart + pypdf** — validated form uploads and in-memory PDF text extraction.
+- **FAISS CPU + NumPy** — modular local vector search without an embedding API.
+- **LangGraph + LangChain Core** — explicit typed graph nodes and conditional routing.
+- **OpenAI SDK** — optional Responses API structured output behind a local interface.
+- **Tenacity** — bounded exponential retry for transient LLM failures.
 
-## Deferred until the feature needs them
+## Development
 
-- **LangGraph and an OpenAI-compatible client** — agent workflow and LLM calls (Phase 4).
-- **pypdf** — PDF text extraction (Phase 2).
-- **ChromaDB or FAISS plus an embedding client** — profile retrieval (Phase 2, after a
-  small interface is defined).
-- **Alembic and a PostgreSQL driver** — migrations and production database support
-  (deployment preparation).
+- **pytest + pytest-asyncio + pytest-cov** — offline unit and integration testing.
+- **Ruff** — formatting and linting.
+- **mypy** — strict backend type checking.
 
-Deferring unused libraries keeps installation fast and makes each phase easier to debug.
+## Intentionally deferred
+
+- **Alembic and PostgreSQL driver** — useful when a deployed database and schema migrations
+  are introduced.
+- **Celery/Redis or another queue** — useful when workflows move from synchronous demo runs
+  to production background jobs.
+- **Hosted embedding libraries** — unnecessary for the deterministic offline portfolio demo.
+
+The project requires Python 3.12+ because the current FAISS/NumPy type ecosystem and CI image
+are aligned on Python 3.12.
