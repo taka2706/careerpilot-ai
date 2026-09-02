@@ -202,6 +202,25 @@ docker compose up --build
 No secrets are copied into the image. Compose provides the frontend with the internal API
 address and persists the development database under `data/`.
 
+## Deploying as a Website
+
+The repository includes `render.yaml`, which defines separate FastAPI and Streamlit web
+services on Render. Both services build from the same Dockerfile, deploy after GitHub checks
+pass, and communicate over Render's private network.
+
+1. Open the Render Blueprint creation page for this repository.
+2. Sign in with GitHub and authorize access to `taka2706/careerpilot-ai`.
+3. Confirm the two free web services and select **Apply**.
+4. Open the URL for `careerpilot-ai-web-taka2706` after both deploys are live.
+
+An OpenAI key is optional. To enable LLM-backed structured writing, add
+`OPENAI_API_KEY`, `OPENAI_MODEL`, and optionally `OPENAI_BASE_URL` only in the API service's
+Render environment settings. Never add secrets to `render.yaml`.
+
+The free deployment uses ephemeral SQLite and FAISS storage, so uploaded profiles and run
+history can reset when Render restarts the service. PostgreSQL and persistent object/vector
+storage are the recommended production upgrade.
+
 ## API
 
 | Method | Endpoint | Purpose |

@@ -11,7 +11,10 @@ class BackendError(RuntimeError):
 
 
 def api_url() -> str:
-    return os.getenv("CAREERPILOT_API_URL", "http://localhost:8000").rstrip("/")
+    configured_url = os.getenv("CAREERPILOT_API_URL", "http://localhost:8000").rstrip("/")
+    if "://" not in configured_url:
+        configured_url = f"http://{configured_url}"
+    return configured_url
 
 
 def request(
