@@ -22,7 +22,7 @@ def render_phase_notice(phase: int, description: str) -> None:
 def fetch_api_health() -> tuple[bool, str]:
     """Check API health without allowing a network error to crash the dashboard."""
 
-    backend_url = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
+    backend_url = os.getenv("CAREERPILOT_API_URL", "http://localhost:8000").rstrip("/")
     try:
         response = httpx.get(f"{backend_url}/health", timeout=2.0)
         response.raise_for_status()
@@ -30,4 +30,3 @@ def fetch_api_health() -> tuple[bool, str]:
         return True, f"{payload['service']} API {payload['version']} is online"
     except (httpx.HTTPError, KeyError, ValueError):
         return False, f"API unavailable at {backend_url}. Start it with the command in README.md."
-

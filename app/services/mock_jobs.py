@@ -1,13 +1,12 @@
-"""Read and validate local demo jobs for development and tests."""
+"""Compatibility helper for loading local demo jobs."""
 
-import json
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
-
 from app.schemas.job import JobRead
+from app.tools.jobs.base import JobProviderError
+from app.tools.jobs.mock_provider import DEFAULT_MOCK_JOBS_PATH, MockJobProvider
 
-MOCK_JOBS_PATH = Path(__file__).resolve().parents[1] / "data" / "mock_jobs.json"
+MOCK_JOBS_PATH = DEFAULT_MOCK_JOBS_PATH
 
 
 class MockJobDataError(RuntimeError):
@@ -18,8 +17,6 @@ def load_mock_jobs(path: Path = MOCK_JOBS_PATH) -> list[JobRead]:
     """Load demo jobs through the same schema future providers will use."""
 
     try:
-        raw_jobs = json.loads(path.read_text(encoding="utf-8"))
-        return TypeAdapter(list[JobRead]).validate_python(raw_jobs)
-    except (OSError, json.JSONDecodeError, ValidationError) as exc:
+        return MockJobProvider(path).load_jobs()
+    except JobProviderError as exc:
         raise MockJobDataError(f"Unable to load mock jobs from {path}") from exc
-
