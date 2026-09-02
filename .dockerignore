@@ -10,3 +10,5 @@ __pycache__
 .coverage
 careerpilot.db
 data/*.db
+data/rag/
+data/evaluation-report.json

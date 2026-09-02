@@ -15,6 +15,7 @@ COPY --chown=careerpilot:careerpilot pyproject.toml README.md ./
 COPY --chown=careerpilot:careerpilot app ./app
 COPY --chown=careerpilot:careerpilot frontend ./frontend
 COPY --chown=careerpilot:careerpilot data ./data
+COPY --chown=careerpilot:careerpilot .streamlit ./.streamlit
 
 RUN python -m pip install --upgrade pip \
     && python -m pip install .
