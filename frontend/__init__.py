@@ -1,2 +1,1 @@
 """CareerPilot AI Streamlit frontend."""
-

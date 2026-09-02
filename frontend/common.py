@@ -1,9 +1,9 @@
 """Shared Streamlit UI helpers."""
 
-import os
-
 import httpx
 import streamlit as st
+
+from frontend.api_client import api_url
 
 
 def configure_page(title: str, icon: str = "🧭") -> None:
@@ -22,7 +22,7 @@ def render_phase_notice(phase: int, description: str) -> None:
 def fetch_api_health() -> tuple[bool, str]:
     """Check API health without allowing a network error to crash the dashboard."""
 
-    backend_url = os.getenv("CAREERPILOT_API_URL", "http://localhost:8000").rstrip("/")
+    backend_url = api_url()
     try:
         response = httpx.get(f"{backend_url}/health", timeout=2.0)
         response.raise_for_status()
