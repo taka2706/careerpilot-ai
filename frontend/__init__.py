@@ -1,0 +1,2 @@
+"""CareerPilot AI Streamlit frontend."""
+
