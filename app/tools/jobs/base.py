@@ -15,4 +15,3 @@ class JobProvider(ABC):
     @abstractmethod
     def search_jobs(self, request: JobSearchRequest) -> list[JobResponse]:
         """Return deterministic matches for validated search preferences."""
-
