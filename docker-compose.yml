@@ -1,0 +1,39 @@
+services:
+  api:
+    build: .
+    environment:
+      DATABASE_URL: sqlite:///./data/careerpilot.db
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/workspace/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  frontend:
+    build: .
+    command:
+      [
+        "streamlit",
+        "run",
+        "frontend/Home.py",
+        "--server.address=0.0.0.0",
+        "--server.port=8501",
+      ]
+    environment:
+      CAREERPILOT_API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
