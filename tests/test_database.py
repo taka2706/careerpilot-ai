@@ -10,10 +10,9 @@ def test_initialize_database_registers_expected_tables() -> None:
     assert {
         "agent_runs",
         "application_drafts",
-        "errors",
-        "evaluations",
+        "error_records",
+        "evaluation_results",
         "job_rankings",
         "jobs",
         "user_profiles",
     }.issubset(Base.metadata.tables)
-

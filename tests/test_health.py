@@ -1,19 +1,29 @@
 """API health endpoint tests."""
 
-from fastapi.testclient import TestClient
+import httpx
+import pytest
+from fastapi import FastAPI
 
-from app.main import app
 
-
-def test_health_check_returns_service_metadata() -> None:
-    with TestClient(app) as client:
-        response = client.get("/health")
+@pytest.mark.asyncio
+async def test_health_check_returns_service_metadata(api_app: FastAPI) -> None:
+    transport = httpx.ASGITransport(app=api_app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
         "service": "CareerPilot AI",
         "version": "0.1.0",
-        "environment": "development",
     }
 
+
+@pytest.mark.asyncio
+async def test_unknown_route_returns_structured_error(api_app: FastAPI) -> None:
+    transport = httpx.ASGITransport(app=api_app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/not-a-real-route")
+
+    assert response.status_code == 404
+    assert response.json() == {"error": {"code": "http_error", "message": "Not Found"}}
