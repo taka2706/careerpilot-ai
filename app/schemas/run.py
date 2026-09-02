@@ -1,6 +1,7 @@
 """Agent run request and response schemas for future workflow endpoints."""
 
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -9,7 +10,7 @@ class AgentRunRequest(BaseModel):
     """A validated user request to start the future agent workflow."""
 
     user_request: str = Field(min_length=3, max_length=2_000)
-    profile_id: str | None = None
+    profile_id: str
 
 
 class AgentRunResponse(BaseModel):
@@ -24,3 +25,4 @@ class AgentRunResponse(BaseModel):
     started_at: datetime
     completed_at: datetime | None
     error_message: str | None
+    run_data: dict[str, Any] = Field(default_factory=dict)

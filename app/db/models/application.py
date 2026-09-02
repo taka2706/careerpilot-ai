@@ -2,7 +2,7 @@
 
 from uuid import uuid4
 
-from sqlalchemy import JSON, ForeignKey, String, Text
+from sqlalchemy import JSON, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, CreatedAtMixin
@@ -21,3 +21,5 @@ class ApplicationDraft(CreatedAtMixin, Base):
     cover_letter: Mapped[str] = mapped_column(Text)
     recruiter_message: Mapped[str] = mapped_column(Text)
     linkedin_message: Mapped[str] = mapped_column(Text)
+    verification_status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0)
