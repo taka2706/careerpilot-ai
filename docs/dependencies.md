@@ -7,7 +7,9 @@
 - **SQLAlchemy** — database abstraction compatible with SQLite now and PostgreSQL later.
 - **Streamlit** — lightweight portfolio dashboard.
 - **HTTPX** — timeout-aware communication from the dashboard to the API.
-- **pytest, Ruff, mypy** — tests, linting, formatting checks, and static type checking.
+- **python-multipart** — prepares FastAPI's form parsing dependency for Phase 2 routes.
+- **pytest + pytest-asyncio** — synchronous and asynchronous tests without network access.
+- **Ruff + mypy** — linting and strict static type checking.
 
 ## Deferred until the feature needs them
 
@@ -19,4 +21,3 @@
   (deployment preparation).
 
 Deferring unused libraries keeps installation fast and makes each phase easier to debug.
-

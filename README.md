@@ -1,167 +1,233 @@
 # CareerPilot AI
 
-An autonomous AI job-search and application assistant built as an internship portfolio
-project. CareerPilot will research suitable roles, compare them with a user's verified
-profile, rank opportunities deterministically, identify skill gaps, generate grounded
-application drafts, and verify its own output.
+## Overview
 
-> **Current status:** Phase 1 foundation is runnable. AI workflows are intentionally not
-> implemented yet.
+CareerPilot AI is an agentic AI job-search and application assistant being built as an
+internship portfolio project. It will research jobs, retrieve verified user profile
+information, rank opportunities, identify skill gaps, draft tailored application material,
+and verify generated claims.
 
-## Why this project exists
+**The project currently contains the Phase 1 foundation.** It deliberately does not make
+LLM calls, ingest resumes, rank jobs, or generate applications yet.
 
-Job seekers often repeat the same research, comparison, and writing work for every role.
-CareerPilot demonstrates how a transparent, tool-using agent workflow can assist with that
-work while keeping claims grounded in the user's resume and leaving submission to the user.
+## Problem
 
-## Planned workflow
+Candidates repeatedly research roles, compare requirements with their background, and
+rewrite similar application material. CareerPilot explores how a transparent agent workflow
+can assist without inventing experience or automatically submitting anything.
+
+## Planned Architecture
 
 ```mermaid
 flowchart TD
-    User --> Planner
-    Planner --> Research[Job Research]
-    Research --> Profile[Profile / RAG]
-    Profile --> Ranking[Deterministic Job Ranking]
-    Ranking --> Gaps[Skill Gap Analysis]
-    Gaps --> Writer[Application Writer]
-    Writer --> Critic[Critic / Verifier]
-    Critic -->|valid| Report[Final Report]
-    Critic -->|correction required; retries remain| Writer
-    Critic -->|retry limit reached| Failure[Safe Failure Report]
+    U[User] --> P[Planner Agent]
+    P --> J[Job Research Agent]
+    J --> R[Profile / RAG Agent]
+    R --> K[Job Ranking Agent]
+    K --> S[Skill Gap Agent]
+    S --> A[Application Writer Agent]
+    A --> C[Critic / Verification Agent]
+    C --> F[Final Report]
 ```
 
-## Phase 1 features
+FastAPI is the backend boundary, Streamlit is the user interface, SQLAlchemy owns
+persistence, and Pydantic models define validated data contracts. Future agents will remain
+outside route functions and will be coordinated explicitly with LangGraph.
 
-- FastAPI application with `GET /health` and interactive API documentation.
-- Environment-based, validated configuration.
-- SQLAlchemy 2 models and automatic SQLite development setup.
-- Typed Pydantic foundations for profiles, search preferences, and jobs.
-- Three schema-validated mock jobs that require no external API.
-- Professional seven-page Streamlit dashboard skeleton.
-- Tests for health, database setup, and mock data integrity.
-- Empty extension points for agents, RAG, tools, and evaluation work in later phases.
+## Current Features
 
-## Project structure
+- FastAPI application with `GET /health` and structured JSON errors.
+- Configurable standard-library logging with no resume or secret logging.
+- Validated environment settings; an OpenAI key is optional and unused in Phase 1.
+- SQLAlchemy 2.x models and idempotent SQLite table initialization.
+- Separate Pydantic API schemas and SQLAlchemy persistence models.
+- Provider-neutral `JobProvider` interface.
+- Deterministic offline provider backed by ten clearly fictional demo jobs.
+- Query, location, remote-only, beginner-friendly, and result-limit filters.
+- Clean seven-page Streamlit skeleton with a timeout-aware backend indicator.
+- Offline tests, Docker/Compose development setup, and GitHub Actions CI.
+
+## Planned Features
+
+- Secure resume ingestion and profile RAG.
+- Real job-provider adapters behind the existing interface.
+- Transparent deterministic ranking and skill-gap analysis.
+- Typed LangGraph orchestration with bounded retries and failure states.
+- Grounded application drafts and critic verification.
+- Evaluation metrics, run tracking, and reliability reporting.
+
+## Technology Stack
+
+- Python 3.11+
+- FastAPI and Uvicorn
+- Pydantic and Pydantic Settings
+- SQLAlchemy and SQLite
+- Streamlit and HTTPX
+- pytest, pytest-asyncio, Ruff, and mypy
+- Docker, Docker Compose, and GitHub Actions
+- LangGraph and an OpenAI-compatible adapter in later phases
+
+## Project Structure
 
 ```text
 careerpilot-ai/
 ├── app/
-│   ├── agents/          # LangGraph nodes (Phase 4+)
-│   ├── api/routes/      # FastAPI route modules
-│   ├── core/            # Settings and shared infrastructure
-│   ├── data/            # Bundled demo data
-│   ├── db/              # Engine, sessions, initialization
-│   ├── evaluation/      # Evaluation framework (Phase 6)
-│   ├── models/          # SQLAlchemy models
-│   ├── rag/             # Profile retrieval (Phase 2)
-│   ├── schemas/         # Pydantic data contracts
-│   ├── services/        # Use-case and business logic
-│   ├── tools/           # Modular tool/provider interfaces
-│   └── main.py          # FastAPI entry point
-├── frontend/            # Streamlit application and pages
-├── tests/               # Automated tests
-├── docs/                # Architecture and dependency decisions
-├── scripts/             # Development/maintenance scripts
-├── data/                # Local runtime data (SQLite is Git-ignored)
-├── .github/workflows/   # CI added in Phase 7
+│   ├── agents/              # LangGraph agents (Phase 4)
+│   ├── api/                 # API router and small route modules
+│   ├── core/                # Settings and logging
+│   ├── db/
+│   │   ├── models/          # Split SQLAlchemy models
+│   │   ├── base.py
+│   │   ├── init_db.py
+│   │   └── session.py
+│   ├── evaluation/          # Evaluation implementation (Phase 6)
+│   ├── rag/                 # Profile retrieval (Phase 2)
+│   ├── schemas/             # Pydantic request/response contracts
+│   ├── services/            # Application services
+│   ├── tools/jobs/          # Job provider interface and demo provider
+│   └── main.py
+├── data/mock_jobs.json      # Ten fictional demo opportunities
+├── frontend/                # Streamlit homepage and seven pages
+├── tests/                   # Offline foundation tests
+├── scripts/init_db.py       # Idempotent table initializer
+├── docs/                    # Architecture and dependency decisions
+├── .github/workflows/ci.yml
 ├── .env.example
+├── Dockerfile
+├── docker-compose.yml
 └── pyproject.toml
 ```
 
-## Quick start
-
-Python 3.11-3.14 is supported.
+## Installation
 
 ```bash
-cd careerpilot-ai
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -e '.[dev]'
+pip install -e ".[dev]"
+```
+
+## Environment Setup
+
+The defaults work without a local environment file. To customize them:
+
+```bash
 cp .env.example .env
 ```
 
-Start the API in terminal 1:
+| Variable | Default | Purpose |
+|---|---|---|
+| `APP_ENV` | `development` | Runtime environment label |
+| `DEBUG` | `true` | FastAPI development debugging |
+| `DATABASE_URL` | `sqlite:///./careerpilot.db` | SQLAlchemy connection URL |
+| `OPENAI_API_KEY` | empty | Optional and unused in Phase 1 |
+| `MAX_AGENT_RETRIES` | `2` | Future bounded workflow retries |
+| `LLM_TIMEOUT_SECONDS` | `60` | Future LLM request timeout |
+| `LOG_LEVEL` | `INFO` | Application logging threshold |
+| `MAX_UPLOAD_SIZE_MB` | `5` | Future resume upload limit |
+| `CAREERPILOT_API_URL` | `http://localhost:8000` | Backend URL used by Streamlit |
+
+Never put a real key in `.env.example` or commit a local `.env` file.
+
+## Initialize the Database
+
+```bash
+python scripts/init_db.py
+```
+
+The command is safe to run repeatedly. The API also initializes missing development tables
+during startup.
+
+## Running the API
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-Start the dashboard in terminal 2 (with the same virtual environment active):
+The API is available at `http://localhost:8000`; interactive documentation is at
+`http://localhost:8000/docs`.
+
+## Running Streamlit
+
+In a second terminal with the same virtual environment active:
 
 ```bash
 streamlit run frontend/Home.py
 ```
 
-Open the dashboard at `http://localhost:8501`, the API at `http://localhost:8000`, and
-the generated API docs at `http://localhost:8000/docs`.
+The dashboard is available at `http://localhost:8501`. If the API is unavailable, the
+homepage shows a friendly warning rather than crashing.
 
-## Tests and quality checks
+## Running Tests
 
 ```bash
 pytest
+```
+
+Optional quality checks:
+
+```bash
 ruff check .
 mypy app
 ```
 
-## Environment variables
+## Docker
 
-| Variable | Purpose | Default |
-|---|---|---|
-| `APP_NAME` | Display/API service name | `CareerPilot AI` |
-| `APP_ENV` | Runtime environment label | `development` |
-| `DEBUG` | FastAPI debug mode | `false` |
-| `API_HOST` | API bind address | `0.0.0.0` |
-| `API_PORT` | API port | `8000` |
-| `DATABASE_URL` | SQLAlchemy database URL | `sqlite:///./data/careerpilot.db` |
-| `BACKEND_URL` | API URL used by Streamlit | `http://localhost:8000` |
+Run both services with SQLite:
 
-Copy `.env.example` to `.env`. Never commit `.env` or API keys.
+```bash
+docker compose up --build
+```
 
-## API endpoints
+No secrets are copied into the image. Compose provides the frontend with the internal API
+address and persists the development database under `data/`.
 
-Phase 1 exposes only:
+## API
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/health` | Verify API availability and version |
+### `GET /health`
 
-Profile, job, workflow, application, run, and evaluation endpoints will be added in the
-phase that implements their business behavior. This avoids placeholder endpoints that
-pretend to work.
+Successful response (`200 OK`):
 
-## Data and safety boundaries
+```json
+{
+  "status": "ok",
+  "service": "CareerPilot AI",
+  "version": "0.1.0"
+}
+```
 
-- Mock job URLs use `example.com` and do not contact external providers.
-- Uploaded files are not supported until validation and size limits arrive in Phase 2.
-- CareerPilot will generate drafts only; it will never submit an application automatically.
-- Secrets belong in local environment variables, never source control.
+No placeholder endpoints are exposed for unfinished behavior.
 
 ## Roadmap
 
-1. **Foundation** — API, UI shell, database, schemas, mock data (complete).
-2. **Profile ingestion and RAG** — safe PDF/TXT/Markdown extraction and retrieval.
-3. **Job research and ranking** — provider interface and deterministic score engine.
-4. **Core LangGraph workflow** — planner, research, profile, and ranking nodes.
-5. **Writing and verification** — skill gaps, grounded drafts, critic, bounded correction.
-6. **Evaluation and reliability** — metrics, scenarios, logging, run tracking.
-7. **Delivery** — Docker, CI, broader tests, documentation, deployment preparation.
+1. **Phase 1 — Foundation:** API, configuration, logging, database, schemas, mock provider,
+   UI skeleton, tests, container baseline, and CI.
+2. **Phase 2 — Profile ingestion and RAG:** safe PDF/TXT/Markdown extraction and retrieval.
+3. **Phase 3 — Job search and ranking:** provider services and deterministic scoring.
+4. **Phase 4 — Core LangGraph workflow:** planner, research, profile, and ranking nodes.
+5. **Phase 5 — Writing and verification:** skill gaps, grounded drafts, critic, and bounded
+   correction.
+6. **Phase 6 — Evaluation and reliability:** scenarios, metrics, logs, and run tracking.
+7. **Phase 7 — Delivery:** harden containers, CI, tests, documentation, and deployment.
+
+## Security
+
+- Secrets are read from environment variables and are excluded from Git.
+- Settings mask the OpenAI API key if configuration is printed.
+- Database files, caches, IDE files, and build artifacts are ignored.
+- Resume uploads will be type-checked, size-limited, sanitized, and never executed in Phase 2.
+- CareerPilot will generate drafts only; applications are never automatically submitted.
+- Unexpected API errors are logged while clients receive a safe structured response.
 
 ## Limitations
 
-Phase 1 does not make LLM calls, ingest resumes, search live job sources, rank roles, or
-generate application materials. Those capabilities will be added incrementally with tests.
+- Every Phase 1 job is fictional demo data and is not an active opening.
+- Search is deterministic keyword filtering, not semantic search or ranking.
+- No resume ingestion, RAG, LLM, LangGraph, application writing, or evaluation execution is
+  implemented yet.
+- SQLite schema changes currently require recreating an empty development database;
+  migrations will be introduced when persistence evolves.
 
-## Technology stack
+## License
 
-Python, FastAPI, Pydantic, SQLAlchemy, SQLite, Streamlit, HTTPX, pytest, Ruff, and mypy.
-LangGraph, an OpenAI-compatible LLM adapter, and a modular vector store are planned for
-their relevant phases.
-
-## Screenshot placeholders
-
-- Dashboard overview — add after interactive features are available.
-- Transparent ranking breakdown — add in Phase 3.
-- Agent run timeline — add in Phase 4.
-- Evaluation report — add in Phase 6.
-
+License selection is pending before public release.
