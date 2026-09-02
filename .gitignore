@@ -13,6 +13,8 @@ htmlcov/
 *.db-*
 *.sqlite
 *.sqlite3
+data/rag/
+data/evaluation-report.json
 .idea/
 .vscode/
 .DS_Store

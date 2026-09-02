@@ -5,6 +5,7 @@ Phase 1 does not require an API key.
 """
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -33,6 +34,8 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = Field(default=60.0, gt=0, le=300)
     log_level: str = "INFO"
     max_upload_size_mb: int = Field(default=5, ge=1, le=50)
+    rag_storage_path: Path = Path("data/rag")
+    embedding_dimensions: int = Field(default=384, ge=64, le=2_048)
     allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:8501"])
 
     @field_validator("log_level")
