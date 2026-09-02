@@ -8,12 +8,11 @@ from pydantic import BaseModel, ConfigDict, Field
 class ProfileCreate(BaseModel):
     """Validated input for a manually created profile."""
 
-    display_name: str = Field(min_length=1, max_length=120)
+    name: str = Field(min_length=1, max_length=120)
     email: str | None = Field(default=None, max_length=320)
-    skills: list[str] = Field(default_factory=list, max_length=200)
 
 
-class ProfileRead(ProfileCreate):
+class ProfileResponse(ProfileCreate):
     """Profile returned by the API."""
 
     model_config = ConfigDict(from_attributes=True)
@@ -22,3 +21,6 @@ class ProfileRead(ProfileCreate):
     created_at: datetime
     updated_at: datetime
 
+
+# Backward-compatible name retained for code written during the initial scaffold.
+ProfileRead = ProfileResponse

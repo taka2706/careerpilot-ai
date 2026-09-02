@@ -1,15 +1,5 @@
-"""Health endpoint schemas."""
+"""Backward-compatible import for the health response schema."""
 
-from typing import Literal
+from app.schemas.common import HealthResponse
 
-from pydantic import BaseModel
-
-
-class HealthResponse(BaseModel):
-    """Public service health information."""
-
-    status: Literal["ok"]
-    service: str
-    version: str
-    environment: str
-
+__all__ = ["HealthResponse"]

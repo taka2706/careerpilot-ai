@@ -14,20 +14,19 @@ class RemoteStatus(StrEnum):
 class JobSearchRequest(BaseModel):
     """Validated job preferences shared by all future providers."""
 
-    query: str = Field(min_length=2, max_length=200)
-    locations: list[str] = Field(default_factory=list, max_length=20)
+    query: str = Field(default="", max_length=200)
+    location: str | None = Field(default=None, max_length=200)
     remote_only: bool = False
-    beginner_friendly: bool = True
-    limit: int = Field(default=20, ge=1, le=100)
+    beginner_friendly: bool = False
+    limit: int = Field(default=20, ge=1, le=50)
 
 
-class JobRead(BaseModel):
+class JobResponse(BaseModel):
     """Provider-neutral representation of a job opportunity."""
 
     model_config = ConfigDict(from_attributes=True)
 
     id: str
-    provider: str
     external_id: str
     title: str
     company: str
@@ -36,8 +35,13 @@ class JobRead(BaseModel):
     description: str
     required_skills: list[str] = Field(default_factory=list)
     preferred_skills: list[str] = Field(default_factory=list)
-    experience_requirements: str | None = None
-    education_requirements: str | None = None
+    experience_requirement: str | None = None
+    education_requirement: str | None = None
     application_url: HttpUrl
     salary: str | None = None
+    source: str
+    beginner_friendly: bool = False
 
+
+# Backward-compatible name retained for the original Phase 1 loader.
+JobRead = JobResponse

@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from app import __version__
 from app.core.config import get_settings
-from app.schemas.health import HealthResponse
+from app.schemas.common import HealthResponse
 
 router = APIRouter(tags=["system"])
 
@@ -18,6 +18,4 @@ def health_check() -> HealthResponse:
         status="ok",
         service=settings.app_name,
         version=__version__,
-        environment=settings.app_env,
     )
-

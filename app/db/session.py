@@ -26,7 +26,7 @@ engine: Engine = create_engine(settings.database_url, connect_args=connect_args,
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-def get_db_session() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session, None, None]:
     """Yield a database session and always close it after the request."""
 
     session = SessionLocal()
@@ -35,3 +35,6 @@ def get_db_session() -> Generator[Session, None, None]:
     finally:
         session.close()
 
+
+# Kept as an alias so existing imports continue to work.
+get_db_session = get_db

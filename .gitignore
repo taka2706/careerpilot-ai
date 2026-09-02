@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 *.py[cod]
@@ -7,7 +9,10 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
-data/*.db
-data/*.sqlite*
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+.idea/
+.vscode/
 .DS_Store
-
